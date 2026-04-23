@@ -1,0 +1,18 @@
+# 민감한 인증 정보
+.credentials.json
+
+# 임시/개인 데이터
+history.jsonl
+cache/
+sessions/
+shell-snapshots/
+file-history/
+downloads/
+backups/
+session-env/
+plans/
+projects/
+mcp-needs-auth-cache.json
+
+# 동기화할 필요 없는 플러그인 캐시
+plugins/
