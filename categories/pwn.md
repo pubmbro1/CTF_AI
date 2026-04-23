@@ -130,6 +130,60 @@ exploit()
 ```
 
 ============================================================
+## Pwn Deep Analysis
+============================================================
+
+### Primitive 식별 (공격 가능한 원시 능력 분류)
+
+exploit 전략 수립 전에 현재 확보 가능한 primitive를 먼저 분류한다:
+
+| Primitive | 확보 방법 | 의미 |
+|-----------|-----------|------|
+| Arbitrary Read | fmt string `%s`, OOB read | 임의 주소 읽기 |
+| Arbitrary Write | fmt string `%n`, OOB write | 임의 주소 쓰기 |
+| Leak (주소 노출) | puts(GOT), printf, fmt | ASLR/PIE 우회 |
+| Control RIP | stack overflow, GOT overwrite | 실행 흐름 제어 |
+
+→ 확보된 primitive 조합으로 공격 경로를 설계한다
+
+### GOT / PLT 분석
+
+```
+pwndbg> got           # GOT 테이블 전체 확인
+pwndbg> plt           # PLT 엔트리 확인
+readelf -r chall      # relocation 테이블
+```
+
+- RELRO 없음 / Partial → GOT overwrite 가능
+- Full RELRO → GOT 읽기는 가능, 쓰기 불가 → 다른 primitive 필요
+
+### Stack vs Heap 분리 판단
+
+**Stack 공격 조건:**
+- 지역 변수 버퍼에 입력
+- 함수 호출 후 return → RIP 제어
+
+**Heap 공격 조건:**
+- malloc/calloc으로 동적 할당된 버퍼에 입력
+- 청크 관리 구조(fd, bk, size) 조작 필요
+
+→ 두 영역을 혼동하지 않는다. `vmmap`으로 주소 범위 먼저 확인
+
+### libc 버전 추론 (바이너리 제공 없을 때)
+
+```python
+# leak된 주소의 하위 3nibble로 오프셋 특정
+# 예: leaked puts = 0x7f...d80 → puts offset 0xd80인 libc 탐색
+# https://libc.blukat.me 또는 libc-database
+```
+
+```bash
+# 로컬에 libc 있을 때
+strings libc.so.6 | grep 'GNU C Library'
+readelf -s libc.so.6 | grep ' puts@@'
+```
+
+============================================================
 ## Overanalysis Guard
 ============================================================
 

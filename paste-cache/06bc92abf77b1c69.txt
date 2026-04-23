@@ -1,0 +1,171 @@
+총평 (핵심만)
+✔ 구조화 수준: 높음 (실전형)
+✔ 반복/루프 제어: 우수
+✔ 토큰 낭비 방지: 잘 설계됨
+❗ 치명적 약점: “실제 실행 환경/도구 통합 부족” + “동적 상호작용 부족”
+
+👉 결론:
+“좋은 분석 AI 프롬프트”는 맞지만
+“CTF를 끝까지 푸는 AI”로는 아직 부족”
+
+1. 잘 만든 부분 (강점)
+① Solving Loop 설계 (핵심 강점)
+
+단순 분석 → 끝이 아니라
+
+실패 → 원인 분석 → 벡터 전환
+
+이 구조는 실제 상위권 CTF 플레이 방식과 거의 동일하다.
+
+👉 이건 매우 좋은 설계다
+
+② Depth Control Rule (상당히 고급)
+
+이건 초보 프롬프트에는 거의 없는 요소다
+
+closed loop 감지
+과분석 방지
+brute-force 억제
+
+👉 효과:
+
+토큰 낭비 감소
+“쓸데없는 삽질” 방지
+③ Taint Tracking 강제 (정확한 방향)
+
+“입력 → 처리 → 출력” 추적 강제는
+
+Web: SSTI / SSRF / RCE
+Pwn: input → memory → control flow
+
+전부 커버 가능
+
+👉 실전 적중률 높이는 핵심 규칙이다
+
+④ “정보 수집 우선” 원칙
+
+이건 CTF에서 가장 중요한 부분 중 하나다
+
+blind attack 억제
+leak 기반 공격 유도
+
+👉 특히 웹/포렌식에서 강력함
+
+2. 문제점 (중요)
+① “실행 피드백 루프”가 약하다
+
+지금 구조는:
+
+분석 → 전략 → 실행 (끝)
+
+하지만 실제 CTF는:
+
+요청 → 응답 → 해석 → 수정 → 재요청
+
+👉 즉, 인터랙티브 루프가 부족함
+
+문제
+LLM이 “머리로만 푸는 구조”
+실제 exploit tuning이 안됨
+② Executor 모드가 현실성이 부족
+./chall
+gdb -q chall
+
+이건 선언만 있고 실제로는:
+
+stdout 결과 없음
+crash 정보 없음
+memory 상태 없음
+
+👉 결과적으로 “가짜 실행”이 됨
+
+③ 카테고리별 깊이 차이 부족
+
+현재는:
+
+Web / Pwn / Crypto 동일 구조
+
+하지만 실제는 다름:
+
+Pwn → libc, GOT, ROP, heap
+Web → framework, middleware, template
+Crypto → 수학적 구조
+
+👉 지금은 “너무 범용적”이라 깊이가 떨어질 수 있음
+
+④ 공격 표면 도출은 좋은데 “우선순위 계산”이 약함
+
+지금은 나열 중심
+
+하지만 실전은:
+
+exploit 가능성
+난이도
+시간 대비 효율
+
+👉 이걸 기반으로 전략 선택 로직이 필요
+
+⑤ “프롬프트 자체 수정 능력”이 부족
+
+9번 항목이 있긴 하지만 약하다
+
+👉 고급 AI는:
+
+“지금 프롬프트 구조가 틀렸다”까지 판단해야 함
+3. 개선하면 바로 상위 1% 되는 포인트
+① “인터랙티브 공격 루프” 추가 (필수)
+
+이거 하나로 성능 확 올라간다:
+
+[Interactive Loop]
+- Send payload
+- Observe response
+- Extract signal (error, delay, diff)
+- Update hypothesis
+- Generate next payload
+
+👉 이걸 Exploit 단계에 강제해야 한다
+
+② “증거 기반 사고(Evidence-based reasoning)” 강화
+
+추가:
+
+모든 가설은 반드시:
+- 관찰된 증거
+- 코드 근거
+- 응답 패턴
+
+중 최소 1개 이상을 기반으로 한다
+
+👉 hallucination 줄이는 핵심
+
+③ Pwn 전용 강화 블록 (강력 추천)
+[Pwn Deep Analysis]
+- libc version inference
+- GOT/PLT resolution
+- stack vs heap separation
+- primitive identification (arb read/write, leak, control RIP)
+④ Web 전용 강화
+[Web Exploit Focus]
+- Template engine detection (Jinja2, Twig, etc)
+- Middleware behavior
+- Reverse proxy / header trust
+- SSRF pivot 가능성
+⑤ “Exploit 실패 시 자동 전략 변경 기준” 명확화
+
+지금은 추상적이다 → 구체화 필요:
+
+If:
+- 동일 payload 2회 실패
+- 응답 변화 없음
+
+Then:
+→ 해당 벡터 폐기
+→ 다른 attack surface로 이동
+④ 한 줄 핵심 개선 요약
+
+지금 프롬프트:
+👉 “잘 생각하는 AI”
+
+개선 방향:
+👉 “실제로 공격을 반복 수행하는 AI”

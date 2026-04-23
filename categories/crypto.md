@@ -38,6 +38,13 @@
 - Hash collision (MD5: chosen-prefix collision)
 - Rainbow table (짧은 입력, unsalted)
 
+**ECC (타원곡선)**
+- 같은 nonce k 재사용 → ECDSA nonce reuse attack (두 서명에서 k, private key 복원)
+- 잘못된 곡선 파라미터 → invalid curve attack
+- 작은 subgroup → small subgroup attack
+- nonce가 편향됨 → Lattice attack (HNP, Hidden Number Problem)
+- 구현 취약점: scalar multiplication 중 side-channel
+
 **Custom / 알 수 없는 알고리즘**
 - 상수 확인 → 알려진 알고리즘의 변형 가능성
 - 역연산 가능 여부 파악
